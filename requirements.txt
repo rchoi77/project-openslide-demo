@@ -1,10 +1,13 @@
 blinker==1.9.0
 click==8.3.0
 flask==3.1.2
+imagecodecs>=2025.3.30
 itsdangerous==2.2.0
 jinja2==3.1.6
 markupsafe==3.0.3
+numpy>=2.2.6
 openslide-bin==4.0.0.8
 openslide-python==1.4.2
 pillow==11.3.0
+tifffile>=2025.5.10
 werkzeug==3.1.3

@@ -11,7 +11,9 @@ import os
 import sys
 from pathlib import Path
 
+import numpy as np
 import openslide
+import tifffile
 from PIL import Image
 
 
@@ -21,6 +23,8 @@ def extract_region(
     width_percent: float,
     height_percent: float,
     output_size: tuple[int, int] = (512, 512),
+    output_format: str = "tiff",
+    quality: int = 100,
     output_dir: str = "out",
 ) -> None:
     """
@@ -32,6 +36,8 @@ def extract_region(
         width_percent: Percentage of width for starting position (0-100)
         height_percent: Percentage of height for starting position (0-100)
         output_size: Size of the region to extract (width, height)
+        output_format: Output format - 'tiff' (lossless tiled), 'png' (lossless), or 'jpeg' (lossy)
+        quality: JPEG quality (1-100, only applies to jpeg format)
         output_dir: Directory to save the output image
     """
     # Open the slide
@@ -86,14 +92,47 @@ def extract_region(
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
 
+    # Determine file extension based on format
+    extension_map = {
+        'tiff': '.tiff',
+        'png': '.png',
+        'jpeg': '.jpg'
+    }
+    extension = extension_map[output_format]
+
     # Generate output filename
     slide_name = Path(slide_path).stem
-    output_filename = f"{slide_name}_L{level}_x{start_x}_y{start_y}_{output_size[0]}x{output_size[1]}.jpg"
+    output_filename = f"{slide_name}_L{level}_x{start_x}_y{start_y}_{output_size[0]}x{output_size[1]}{extension}"
     output_path = os.path.join(output_dir, output_filename)
 
-    # Save as JPEG
-    region_rgb.save(output_path, 'JPEG', quality=95)
-    print(f"\nSaved extracted region to: {output_path}")
+    # Save based on format
+    if output_format == 'tiff':
+        # Convert to numpy array for tifffile
+        region_array = np.array(region_rgb)
+
+        # Save as tiled TIFF with compression
+        # tile=(256, 256) creates a tiled TIFF for efficient access
+        # compression='adobe_deflate' provides lossless compression
+        # photometric='rgb' ensures proper color interpretation
+        tifffile.imwrite(
+            output_path,
+            region_array,
+            tile=(256, 256),
+            compression='adobe_deflate',
+            photometric='rgb',
+            metadata={'axes': 'YXC'}
+        )
+        print(f"\nSaved extracted region to: {output_path} (TIFF, lossless, tiled)")
+
+    elif output_format == 'png':
+        # Save as PNG (lossless compression)
+        region_rgb.save(output_path, 'PNG', optimize=True)
+        print(f"\nSaved extracted region to: {output_path} (PNG, lossless)")
+
+    elif output_format == 'jpeg':
+        # Save as JPEG (lossy compression with quality setting)
+        region_rgb.save(output_path, 'JPEG', quality=quality, optimize=True)
+        print(f"\nSaved extracted region to: {output_path} (JPEG, quality={quality})")
 
     # Close the slide
     slide.close()
@@ -105,14 +144,17 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Extract from center of slide at level 2
+  # Extract from center of slide at level 2 (default TIFF format)
   python extract_region.py slide.svs --level 2 --width-percent 50 --height-percent 50
 
-  # Extract from top-left at highest resolution with custom size
-  python extract_region.py slide.svs --level 0 --width-percent 10 --height-percent 10 --size 1024 1024
+  # Extract as PNG (lossless)
+  python extract_region.py slide.svs --level 0 --width-percent 10 --height-percent 10 --format png
 
-  # Extract to custom output directory
-  python extract_region.py slide.svs --level 1 --width-percent 25 --height-percent 75 --output-dir results
+  # Extract as JPEG with quality 100 (lossy but smallest size)
+  python extract_region.py slide.svs --level 0 --width-percent 10 --height-percent 10 --format jpeg --quality 100
+
+  # Extract with custom size and output directory
+  python extract_region.py slide.svs --level 1 --width-percent 25 --height-percent 75 --size 1024 1024 --output-dir results
         """
     )
 
@@ -153,6 +195,22 @@ Examples:
     )
 
     parser.add_argument(
+        '--format',
+        type=str,
+        choices=['tiff', 'png', 'jpeg'],
+        default='tiff',
+        help='Output format: tiff (lossless, tiled), png (lossless), jpeg (lossy) (default: tiff)'
+    )
+
+    parser.add_argument(
+        '--quality',
+        type=int,
+        default=100,
+        metavar='N',
+        help='JPEG quality (1-100, only applies to jpeg format) (default: 100)'
+    )
+
+    parser.add_argument(
         '--output-dir',
         type=str,
         default='out',
@@ -166,6 +224,11 @@ Examples:
         print(f"Error: Slide file not found: {args.slide}")
         sys.exit(1)
 
+    # Validate quality range
+    if not (1 <= args.quality <= 100):
+        print("Error: Quality must be between 1 and 100")
+        sys.exit(1)
+
     # Extract the region
     extract_region(
         slide_path=args.slide,
@@ -173,6 +236,8 @@ Examples:
         width_percent=args.width_percent,
         height_percent=args.height_percent,
         output_size=tuple(args.size),
+        output_format=args.format,
+        quality=args.quality,
         output_dir=args.output_dir,
     )
 
