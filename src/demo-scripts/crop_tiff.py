@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-"""
-Extract a region from a whole slide image at a specific zoom level.
-
-This script demonstrates how to use OpenSlide to open and process Whole Slide Images,
-extracting a specific region that can be used for machine learning applications.
-"""
-
 import argparse
 import os
 import sys
@@ -22,6 +14,7 @@ def extract_region(
     height_percent: float,
     output_size: tuple[int, int] = (3, 3),
     output_dir: str = "out",
+    verbose: bool = True,
 ) -> None:
     """
     Extract a region from a whole slide image.
@@ -35,15 +28,24 @@ def extract_region(
         output_dir: Directory to save the output image
     """
     # Open the slide
-    print(f"Opening slide: {slide_path}")
+    if verbose: print(f"Opening slide: {slide_path}")
     slide = openslide.OpenSlide(slide_path)
 
-    # Print slide information
-    print(f"\nSlide information:")
-    print(f"  Dimensions: {slide.dimensions}")
-    print(f"  Level count: {slide.level_count}")
-    print(f"  Level dimensions: {slide.level_dimensions}")
-    print(f"  Level downsamples: {slide.level_downsamples}")
+    try:
+        mpp_x = float(slide.properties[openslide.PROPERTY_NAME_MPP_X])
+        mpp_y = float(slide.properties[openslide.PROPERTY_NAME_MPP_Y])
+    except:
+        mpp_x, mpp_y = None, None
+
+    if verbose:
+        # Print slide information
+        print(f"\nSlide information:")
+        print(f"  Dimensions: {slide.dimensions}")
+        print(f"  Level count: {slide.level_count}")
+        print(f"  Level dimensions: {slide.level_dimensions}")
+        print(f"  Level downsamples: {slide.level_downsamples}")
+        if mpp_x and mpp_y:
+            print(f"Microns per pixel: x-{mpp_x}, y-{mpp_y}")
 
     # Validate level
     if level < 0 or level >= slide.level_count:
@@ -64,19 +66,24 @@ def extract_region(
     start_y = int((height_percent / 100) * level0_height)
 
     # Ensure we don't go out of bounds
-    #select_width_px = int((output_size[0] / 100) * level0_width)
-    #select_height_px = int((output_size[1] / 100) * level0_height)
     max_x = level0_width - int(output_size[0] * slide.level_downsamples[level])
     max_y = level0_height - int(output_size[1] * slide.level_downsamples[level])
     start_x = min(start_x, max(0, max_x))
     start_y = min(start_y, max(0, max_y))
 
-    print(f"\nExtracting region:")
-    print(f"  Level: {level}")
-    print(f"  Starting position (level 0 coords): ({start_x}, {start_y})")
-    print(f"  Position as percentage: ({width_percent}%, {height_percent}%)")
-    print(f"  Region size: {output_size[0]}x{output_size[1]}")
-    print(f"  Downsample factor: {slide.level_downsamples[level]}")
+    if mpp_x and mpp_y:
+        x_microns = output_size[0] * mpp_x
+        y_microns = output_size[1] * mpp_y
+
+    if verbose:
+        print(f"\nExtracting region:")
+        print(f"  Level: {level}")
+        print(f"  Starting position (level 0 coords): ({start_x}, {start_y})")
+        print(f"  Position as percentage: ({width_percent}%, {height_percent}%)")
+        print(f"  Region size: {output_size[0]}x{output_size[1]}")
+        print(f"  Downsample factor: {slide.level_downsamples[level]}")
+        if x_microns and y_microns:
+            print(f"Real dimensions: {x_microns}um x {y_microns}um")
 
     # Extract the region
     # read_region returns RGBA, location is in level 0 reference frame
@@ -90,12 +97,12 @@ def extract_region(
 
     # Generate output filename
     slide_name = Path(slide_path).stem
-    output_filename = f"{slide_name}_x{start_x}_y{start_y}_{output_size[0]}x{output_size[1]}.tiff"
+    output_filename = f"{slide_name}_x{width_percent}%_y{height_percent}%_x{x_microns}um_y{y_microns}um.tiff"
     output_path = os.path.join(output_dir, output_filename)
 
     # Save as JPEG
     region_rgb.save(output_path, 'TIFF', quality=100)
-    print(f"\nSaved extracted region to: {output_path}")
+    if verbose: print(f"\nSaved extracted region to: {output_path}")
 
     # Close the slide
     slide.close()
@@ -103,46 +110,46 @@ def extract_region(
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Extract a region from a whole slide image at a specific zoom level.',
+        description='Extract a region from a whole slide image.',
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Extract from center of slide at level 2
-  python extract_region.py slide.svs --level 2 --width-percent 50 --height-percent 50
+        epilog=
+        """Examples:
+        # Extract from center of slide at zoom level 2.
+        python crop_tiff.py slide.svs -x 50 -y 50 --level 2
 
-  # Extract from top-left at highest resolution with custom size
-  python extract_region.py slide.svs --level 0 --width-percent 10 --height-percent 10 --size 1024 1024
+        # Extract area near top left at highest resolution with custom size.
+        python crop_tiff.py slide.svs -x 10 -y 10 --size 1024 1024
 
-  # Extract to custom output directory
-  python extract_region.py slide.svs --level 1 --width-percent 25 --height-percent 75 --output-dir results
+        # Extract to custom output directory with verbose output.
+        python crop_tiff.py slide.svs -x 25 -y 75 -o results -v
         """
     )
 
     parser.add_argument(
-        'slide',
+        'slide_path',
         type=str,
-        help='Path to the whole slide image file'
+        help='Path to the whole slide image file.'
+    )
+
+    parser.add_argument(
+        '-x', '--width-percent',
+        type=float,
+        required=True,
+        help='Percentage of width for starting position (0-100).'
+    )
+
+    parser.add_argument(
+        '-y', '--height-percent',
+        type=float,
+        required=True,
+        help='Percentage of height for starting position (0-100).'
     )
 
     parser.add_argument(
         '--level',
         type=int,
-        required=True,
-        help='Zoom level to extract from (0 is highest resolution)'
-    )
-
-    parser.add_argument(
-        '--width-percent',
-        type=float,
-        required=True,
-        help='Percentage of width for starting position (0-100)'
-    )
-
-    parser.add_argument(
-        '--height-percent',
-        type=float,
-        required=True,
-        help='Percentage of height for starting position (0-100)'
+        default=0,
+        help='Zoom level to extract from (0 is highest resolution).'
     )
 
     parser.add_argument(
@@ -151,31 +158,36 @@ Examples:
         nargs=2,
         default=[4096, 4096],
         metavar=('WIDTH', 'HEIGHT'),
-        help='Size of the region to extract in pixels (default: 512 512)'
+        help='Size of the region to extract in pixels (default: 512 512).'
     )
 
     parser.add_argument(
-        '--output-dir',
+        '-o', '--output-dir',
         type=str,
         default='out',
-        help='Directory to save the output image (default: out)'
+        help='Directory to save the output image (default: out).'
+    )
+
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", default=True, help="Allow output or no."
     )
 
     args = parser.parse_args()
 
     # Check if slide file exists
-    if not os.path.exists(args.slide):
-        print(f"Error: Slide file not found: {args.slide}")
+    if not os.path.exists(args.slide_path):
+        print(f"Error: Slide file not found: {args.slide_path}")
         sys.exit(1)
 
     # Extract the region
     extract_region(
-        slide_path=args.slide,
+        slide_path=args.slide_path,
         level=args.level,
         width_percent=args.width_percent,
         height_percent=args.height_percent,
         output_size=tuple(args.size),
         output_dir=args.output_dir,
+        verbose=args.verbose,
     )
 
 

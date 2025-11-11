@@ -12,3 +12,10 @@ wheels/
 # Stuff
 sampleslidedata/
 out/
+WSI
+
+# Images
+*.tiff
+
+# mac
+*.DS_Store
