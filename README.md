@@ -36,3 +36,11 @@ python src/demo-scripts/extract_region.py [slide.svs] --level 0 --width-percent 
 Also comes with a provided web-viewer for whole slide images. 
 
 `python src/deepzoom-server/deepzoom_server.py \[your_slide_image.svs\]`
+
+Additionally, see
+```bash
+python src/demo-scripts/crop_tiff.py -h
+# or
+python src/demo-scripts/generate_patches.py -h
+```
+for additional functionality.
