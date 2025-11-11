@@ -25,7 +25,7 @@ def main():
     )
 
     parser.add_argument(
-        'x', '--width-range',
+        '-x', '--width-range',
         type=int,
         nargs=2,
         required=True,
@@ -34,7 +34,7 @@ def main():
     )
 
     parser.add_argument(
-        'y', '--height-range',
+        '-y', '--height-range',
         type=int,
         nargs=2,
         required=True,
@@ -59,7 +59,7 @@ def main():
     )
 
     parser.add_argument(
-        'o', '--output-dir',
+        '-o', '--output-dir',
         type=str,
         default='out',
         help='Directory to save the output images (default: out)'

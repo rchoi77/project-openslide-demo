@@ -72,8 +72,8 @@ def extract_region(
     start_y = min(start_y, max(0, max_y))
 
     if mpp_x and mpp_y:
-        x_microns = output_size[0] * mpp_x
-        y_microns = output_size[1] * mpp_y
+        x_microns = round(output_size[0] * mpp_x)
+        y_microns = round(output_size[1] * mpp_y)
 
     if verbose:
         print(f"\nExtracting region:")
