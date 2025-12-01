@@ -53,7 +53,7 @@ def main():
         '--size',
         type=int,
         nargs=2,
-        default=[3072, 3072],
+        default=[2560, 2560],
         metavar=('WIDTH', 'HEIGHT'),
         help='Size of the region to extract in pixels (default: 3072 3072)'
     )

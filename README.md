@@ -42,5 +42,7 @@ Additionally, see
 python src/demo-scripts/crop_tiff.py -h
 # or
 python src/demo-scripts/generate_patches.py -h
+# or
+python src/demo-scripts/slide_info.py -h
 ```
 for additional functionality.
