@@ -22,7 +22,7 @@ def generate_patches(
     image_path: str,
     output_dir: str,
     patch_size: tuple[int, int] = (512, 512),
-    stride_percent: int = 10,
+    step_size: int = 10,
     verbose: bool = True,
 ) -> int:
     """
@@ -32,7 +32,7 @@ def generate_patches(
         image_path: Path to the source image
         output_dir: Directory to save patches
         patch_size: Size of each patch (width, height) in pixels
-        stride_percent: Stride as percentage of image dimensions
+        step_size: Step size as percentage of image dimensions
         verbose: Print progress info
 
     Returns:
@@ -73,8 +73,8 @@ def generate_patches(
     patch_count = 0
 
     # Calculate positions (percentage-based)
-    x_positions = list(range(0, 100 - int(patch_size[0] / img_width * 100) + 1, stride_percent))
-    y_positions = list(range(0, 100 - int(patch_size[1] / img_height * 100) + 1, stride_percent))
+    x_positions = list(range(0, 100 - int(patch_size[0] / img_width * 100) + 1, step_size))
+    y_positions = list(range(0, 100 - int(patch_size[1] / img_height * 100) + 1, step_size))
 
     for x_percent in x_positions:
         for y_percent in y_positions:
@@ -114,11 +114,11 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-    # Process all images with default settings (512x512, 10% stride)
+    # Process all images with default settings (512x512, 10% step size)
     python batch_generate_patches.py /path/to/images -o output
 
-    # Custom patch size and stride
-    python batch_generate_patches.py /path/to/images -o output --size 256 256 --stride 20
+    # Custom patch size and step size
+    python batch_generate_patches.py /path/to/images -o output --size 256 256 --step-size 20
         """
     )
 
@@ -145,10 +145,10 @@ Examples:
     )
 
     parser.add_argument(
-        '--stride',
+        '--step-size',
         type=int,
         default=10,
-        help='Stride as percentage of image size (default: 10)'
+        help='Step size as percentage of image size (default: 10)'
     )
 
     parser.add_argument(
@@ -174,7 +174,7 @@ Examples:
 
     print(f"Found {len(tiff_files)} TIFF files")
     print(f"Patch size: {args.size[0]}x{args.size[1]}")
-    print(f"Stride: {args.stride}%")
+    print(f"Step size: {args.step_size}%")
     print()
 
     total_patches = 0
@@ -188,7 +188,7 @@ Examples:
             image_path=str(tiff_path),
             output_dir=image_output_dir,
             patch_size=tuple(args.size),
-            stride_percent=args.stride,
+            step_size=args.step_size,
             verbose=args.verbose,
         )
         total_patches += patches
