@@ -706,16 +706,16 @@ def main():
         epilog="""
 Examples:
     # Default: 1500μm from edge, 500μm spacing, 512x512 patches
-    python generate_patches_contour.py slide.svs -o output
+    python generate_patches_contour.py slide.svs -o out
 
     # Custom distance and spacing
-    python generate_patches_contour.py slide.svs -o output --distance 1200 --arc-step 300
+    python generate_patches_contour.py slide.svs -o out --distance 1200 --arc-step 300
 
     # Larger patches
-    python generate_patches_contour.py slide.svs -o output --size 1024 1024
+    python generate_patches_contour.py slide.svs -o out --size 1024 1024
 
     # Limit number of patches
-    python generate_patches_contour.py slide.svs -o output --max-patches 100
+    python generate_patches_contour.py slide.svs -o out --max-patches 100
         """
     )
 
@@ -728,8 +728,8 @@ Examples:
     parser.add_argument(
         '-o', '--output-dir',
         type=str,
-        default='output_contour',
-        help='Directory to save output patches (default: output_contour)'
+        default='out',
+        help='Directory to save output patches (default: out)'
     )
 
     # Distance options (mutually exclusive)

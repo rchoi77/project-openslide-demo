@@ -96,16 +96,16 @@ def main():
         epilog="""
 Examples:
   # Basic usage
-  %(prog)s slides.txt -o ./output_patches
+  %(prog)s slides.txt -o ./out
 
   # With custom patch parameters
-  %(prog)s slides.txt -o ./output_patches --distance 1500 --size 1024 1024
+  %(prog)s slides.txt -o ./out --distance 1500 --size 1024 1024
 
   # Use fractional distance (25%% of tissue diameter)
-  %(prog)s slides.txt -o ./output_patches --distance-fraction 0.25
+  %(prog)s slides.txt -o ./out --distance-fraction 0.25
 
   # Keep downloaded files for inspection
-  %(prog)s slides.txt -o ./output_patches --keep-downloads --download-dir ./downloads
+  %(prog)s slides.txt -o ./out --keep-downloads --download-dir ./downloads
         """,
     )
 

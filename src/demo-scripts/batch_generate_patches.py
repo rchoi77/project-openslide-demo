@@ -115,10 +115,10 @@ def main():
         epilog="""
 Examples:
     # Process all images with default settings (512x512, 10% step size)
-    python batch_generate_patches.py /path/to/images -o output
+    python batch_generate_patches.py /path/to/images -o out
 
     # Custom patch size and step size
-    python batch_generate_patches.py /path/to/images -o output --size 256 256 --step-size 20
+    python batch_generate_patches.py /path/to/images -o out --size 256 256 --step-size 20
         """
     )
 
@@ -131,8 +131,8 @@ Examples:
     parser.add_argument(
         '-o', '--output-dir',
         type=str,
-        default='output',
-        help='Base output directory (default: output)'
+        default='out',
+        help='Base output directory (default: out)'
     )
 
     parser.add_argument(
