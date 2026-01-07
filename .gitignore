@@ -16,6 +16,9 @@ WSI
 
 # Images
 *.tiff
+*.png
+*.jpg
+*.jpeg
 
 # mac
 *.DS_Store
