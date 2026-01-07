@@ -1,0 +1,23 @@
+uv run python src/demo-scripts/generate_patches_contour.py \
+"/Users/epivara-intern/Downloads/wsi-images-from-morphle/02df3870-c5a8-4d7f-b019-7dc080c218c4_20241121_P25_#189_Te.tiff" \
+-o output_test/P25_#189_Te_1024 \
+--select-tissues 1 \
+--max-patches 20 \
+--size 1024 1024
+
+# Basic usage
+uv run python src/demo-scripts/s3_batch_generate_patches_contour.py \
+slides_to_process.txt \
+-o ./output_patches
+
+# With custom parameters
+caffeinate -i uv run python src/demo-scripts/s3_batch_generate_patches_contour.py \
+slides_to_process.txt \
+-o ./output_patches \
+--bucket morphle-epivara-wsi \
+--prefix morphle-tiff/ \
+--distance-fraction 0.167 \
+--arc-step 500 \
+--size 1024 1024 \
+--level 0 \
+--select-tissues 1
