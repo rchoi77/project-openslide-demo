@@ -280,34 +280,64 @@ def get_contour_centroid(contour):
     return cx, cy
 
 
-def sort_and_label_contours(contours, verbose: bool = True):
+def sort_and_label_contours(contours, min_area_ratio: float = 0.1, verbose: bool = True):
     """
-    Sort contours top-to-bottom and assign tissue IDs.
+    Filter tiny fragments and sort contours by orientation-aware position.
+
+    Step 1: Remove contours with area < min_area_ratio of the largest contour.
+    Step 2: Detect orientation (horizontal vs vertical) based on centroid spread.
+    Step 3: Sort by X (left→right) if horizontal, by Y (top→bottom) if vertical.
 
     Args:
         contours: List of OpenCV contours
+        min_area_ratio: Minimum area as fraction of largest (default 0.1 = 10%)
         verbose: Print progress info
 
     Returns:
-        List of (tissue_id, contour) tuples, sorted top-to-bottom.
+        List of (tissue_id, contour) tuples, sorted by position.
         tissue_id is 1-indexed.
     """
     if not contours:
         return []
 
-    # Sort contours by centroid y-coordinate (top to bottom)
-    contours_with_centroids = []
+    # Calculate areas and centroids for all contours
+    contour_data = []
     for contour in contours:
+        area = cv2.contourArea(contour)
         cx, cy = get_contour_centroid(contour)
-        contours_with_centroids.append((cy, contour))
+        contour_data.append((contour, area, cx, cy))
 
-    contours_with_centroids.sort(key=lambda x: x[0])  # Sort by y (top to bottom)
+    # Step 1: Filter tiny fragments
+    max_area = max(d[1] for d in contour_data)
+    min_area = max_area * min_area_ratio
+    filtered = [d for d in contour_data if d[1] >= min_area]
+
+    if verbose and len(filtered) < len(contour_data):
+        removed = len(contour_data) - len(filtered)
+        print(f"  Filtered out {removed} tiny fragment(s) (< {min_area_ratio:.0%} of largest)")
+
+    # Step 2: Detect orientation and sort
+    orientation = "single tissue"
+    if len(filtered) > 1:
+        x_coords = [d[2] for d in filtered]
+        y_coords = [d[3] for d in filtered]
+        x_spread = max(x_coords) - min(x_coords)
+        y_spread = max(y_coords) - min(y_coords)
+
+        if x_spread > y_spread:
+            # Horizontal layout - sort left to right
+            filtered.sort(key=lambda d: d[2])
+            orientation = "horizontal (left→right)"
+        else:
+            # Vertical layout - sort top to bottom
+            filtered.sort(key=lambda d: d[3])
+            orientation = "vertical (top→bottom)"
 
     # Assign tissue IDs (1-indexed)
-    labeled = [(tid, item[1]) for tid, item in enumerate(contours_with_centroids, start=1)]
+    labeled = [(tid, d[0]) for tid, d in enumerate(filtered, start=1)]
 
     if verbose:
-        print(f"  Found {len(labeled)} tissue(s) (sorted top to bottom)")
+        print(f"  Found {len(labeled)} tissue(s), {orientation}")
 
     return labeled
 
@@ -434,8 +464,8 @@ def save_debug_visualization(
         (0, 255, 0),    # Green - Tissue 8
     ]
 
-    # Draw sample points colored by tissue ID
-    for point in sample_points:
+    # Draw sample points colored by tissue ID with patch numbers
+    for idx, point in enumerate(sample_points):
         if len(point) >= 3:
             x, y, tissue_id = point[0], point[1], int(point[2])
         else:
@@ -443,6 +473,16 @@ def save_debug_visualization(
             tissue_id = 1
         color = tissue_colors[(tissue_id - 1) % len(tissue_colors)]
         cv2.circle(vis, (int(x), int(y)), 5, color, -1)
+        # Add patch number
+        cv2.putText(
+            vis,
+            str(idx),
+            (int(x) + 7, int(y) + 4),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.35,
+            (255, 255, 255),
+            1,
+        )
 
     # Count tissues
     if sample_points and len(sample_points[0]) >= 3:
