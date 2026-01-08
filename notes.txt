@@ -21,3 +21,9 @@ slides_to_process.txt \
 --size 1024 1024 \
 --level 0 \
 --select-tissues 1
+
+
+caffeinate -i uv run python src/demo-scripts/local_batch_generate_patches_contour.py \
+/Users/epivara-intern/Downloads/datasets/leydig/wsi \
+-o /Users/epivara-intern/Downloads/datasets/leydig/patches \
+--select-tissues 1
