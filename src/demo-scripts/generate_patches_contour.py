@@ -712,7 +712,7 @@ def generate_contour_patches(
         region = slide.read_region((level0_x, level0_y), level, patch_size)
         region_rgb = region.convert('RGB')
 
-        # Generate filename with tissue ID and metadata
+        # Generate filename with tissue ID, coordinates, and metadata
         if distance_from_edge_um is not None:
             distance_str = f"d{int(distance_from_edge_um)}um"
         else:
@@ -722,7 +722,9 @@ def generate_contour_patches(
             f"t{tissue_id:02d}_"
             f"{distance_str}_"
             f"p{patch_idx:04d}_"
-            f"x{patch_um_x}um_y{patch_um_y}um.tiff"
+            f"x{level0_x}_y{level0_y}_"
+            f"{patch_size[0]}x{patch_size[1]}_"
+            f"{slide_mpp:.2f}mpp.tiff"
         )
         out_path = os.path.join(output_dir, filename)
 
