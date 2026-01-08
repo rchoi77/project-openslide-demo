@@ -724,11 +724,11 @@ def generate_contour_patches(
             f"p{patch_idx:04d}_"
             f"x{level0_x}_y{level0_y}_"
             f"{patch_size[0]}x{patch_size[1]}_"
-            f"{slide_mpp:.2f}mpp.tiff"
+            f"{slide_mpp:.2f}mpp.png"
         )
         out_path = os.path.join(output_dir, filename)
 
-        region_rgb.save(out_path, 'TIFF')
+        region_rgb.save(out_path, 'PNG')
         patch_count += 1
 
         if verbose and (i + 1) % 50 == 0:
