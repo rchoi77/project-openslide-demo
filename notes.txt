@@ -27,3 +27,18 @@ caffeinate -i uv run python src/demo-scripts/local_batch_generate_patches_contou
 /Users/epivara-intern/Downloads/datasets/leydig/wsi \
 -o /Users/epivara-intern/Downloads/datasets/leydig/patches \
 --select-tissues 1
+
+caffeinate -i uv run python src/demo-scripts/local_batch_generate_patches_contour.py \
+/Users/epivara-intern/Downloads/datasets/leydig/wsi \
+-o /Users/epivara-intern/Downloads/datasets/leydig/patches \
+--select-tissues 1 \
+--max-patches-mode
+
+# ndpi only, because they have different magnification
+caffeinate -i uv run python src/demo-scripts/local_batch_generate_patches_contour.py \
+/Users/epivara-intern/Downloads/datasets/leydig/wsi \
+-o /Users/epivara-intern/Downloads/datasets/leydig/patches_ndpi_512 \
+--select-tissues 1 \
+--max-patches-mode \
+--size 512 512 \
+--extensions .ndpi
