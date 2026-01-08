@@ -519,6 +519,7 @@ def generate_contour_patches(
     level: int = 0,
     max_patches: int | None = None,
     select_tissues: list[int] | None = None,
+    max_patches_mode: bool = False,
     save_debug: bool = True,
     verbose: bool = True,
 ) -> int:
@@ -539,6 +540,7 @@ def generate_contour_patches(
         level: Slide level to extract from (0 = highest resolution)
         max_patches: Maximum number of patches to extract (None = no limit)
         select_tissues: List of tissue IDs to include (None = all tissues)
+        max_patches_mode: Auto-calculate arc_step for max patches without overlap
         save_debug: Save a visualization image
         verbose: Print progress info
 
@@ -565,6 +567,12 @@ def generate_contour_patches(
         print(f"Slide dimensions: {slide.dimensions}")
         print(f"Slide MPP: {slide_mpp} μm/px")
         print(f"Levels: {slide.level_count}")
+
+    # Max patches mode: auto-calculate arc_step for no overlap
+    if max_patches_mode:
+        arc_step_um = patch_size[0] * slide_mpp
+        if verbose:
+            print(f"Max patches mode: arc_step = {arc_step_um:.0f} μm (no overlap)")
 
     # Validate level
     if level < 0 or level >= slide.level_count:

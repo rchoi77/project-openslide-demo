@@ -109,6 +109,12 @@ Examples:
         dest="max_patches",
         help="Maximum patches per slide (default: no limit)",
     )
+    patch_group.add_argument(
+        "--max-patches-mode",
+        action="store_true",
+        dest="max_patches_mode",
+        help="Auto-calculate spacing for max patches without overlap",
+    )
 
     # Other options
     other_group = parser.add_argument_group("Other Options")
@@ -196,6 +202,7 @@ Examples:
                 level=args.level,
                 select_tissues=args.select_tissues,
                 max_patches=args.max_patches,
+                max_patches_mode=args.max_patches_mode,
                 verbose=verbose,
             )
             success_count += 1
